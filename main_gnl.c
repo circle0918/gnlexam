@@ -2,7 +2,7 @@
 #include <fcntl.h>
 #include <sys/uio.h>
 #include <sys/types.h>
-//#include "./get_next_line.h"
+#include "./gnl.h"
 #include <time.h>
 int main(int argc, char **argv)
 {
@@ -15,18 +15,24 @@ int main(int argc, char **argv)
 	if (argc == 2)
 	{
 		fd = open(argv[1], O_RDONLY);
-		while ((ret = get_next_line(fd) != NULL)
-			printf("Line #%d: %s\n", ret, ++line);
+		while ((ret = get_next_line(fd)) != NULL)
+		{
+			printf("Line #%d: %s\n", ++line, ret);
+			free(ret);
+		}
 		if (!ret)
-			printf("-----------\nNO line or Error\n");
+			printf("-----------NO line or Error\n");
 		close(fd);
 	}
 	if (argc == 1)
 	{
 		while ((ret = get_next_line(0)) != NULL)
-			printf("Line #%d: %s\n", ret, ++line);
+		{
+			printf("Line #%d: %s\n", ++line, ret);
+			free(ret);
+		}
 		if (!ret)
-			printf("-----------\nNO line or Error\n");
+			printf("-----------NO line or Error\n");
 		close(fd);
 	}
 	

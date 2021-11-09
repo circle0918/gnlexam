@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
+#include "gnl.h"
 
 char		*ft_strncpy(char *dest, char *src, int n)
 {
@@ -69,72 +69,70 @@ char		*ft_substr(char *s, size_t start, size_t len)
 	return (new);
 }
 
-int			ft_output(char **str, char **line, int ret, int fd, int i)
+char* ft_output(char **str, int lenght_to_cut)
 {
 	char	*tmp;
+	char *ret;
 
-	if (ret == 0 && str[fd] == NULL)
+	if (lenght_to_cut != 0)
 	{
-		*line = ft_strdup("");
-		return (0);
+		ret = ft_substr(*str, 0, lenght_to_cut);
+		tmp = ft_strdup(*str + lenght_to_cut); //
+		free(*str);
+		*str = tmp;
 	}
-	if (i != -1)
+	else // last line
 	{
-		*line = ft_substr(str[fd], 0, i);
-		tmp = ft_strdup(str[fd] + i + 1);
-		free(str[fd]);
-		str[fd] = tmp;
-//		*line = str[fd];
-//		str[fd] = (*line) + i + 1;
-		return (1);
+		ret = ft_strdup(*str); // if last only has '\0', to EXCEPTION
+		free(*str);
+		*str = NULL;
 	}
-	else
-	{
-		*line = ft_strdup(str[fd]);
-		free(str[fd]);
-		str[fd] = NULL;
-		return (0);
-	}
+	return ret;
 }
 
-int			get_next_line(int fd, char **line)
+char*	get_next_line(int fd)
 {
 	int			ret;
-	static char	*str[FD_SIZE];
+	static char	*str;
 	char		*buf;
-	char		*t;
-	if (str[fd])
+	if (str)
 	{
-		int pos = ft_strchr(str[fd], '\n');
-		if ( pos != -1)
-			return (ft_output(str, line, 1, fd, pos));
+		int find_pos = ft_strchr(str, '\n');
+		if ( find_pos != -1) // no need to add new buf
+			return (ft_output(&str, find_pos+1)); //find_pos+1 is used for substr(, , length)
 	}
-	
 	if (!(buf = ft_strnew(BUFFER_SIZE)))
-		return (-1);
+		return (NULL);
 
-	
+	int find_pos_n = -1;
 	while ((ret = read(fd, buf, BUFFER_SIZE)) > 0)
 	{
-		buf[ret] = '\0';
-		if (!str[fd])
-			str[fd] = ft_strdup(buf);
+		buf[ret] = '\0';// but.length = BUFFER_SIZE + 1
+		if (!str)
+			str = ft_strdup(buf);
 		else
 		{
-			t = ft_strjoin(str[fd], buf);
-			free(str[fd]);
-			str[fd] = t;
+			char *tmp = ft_strjoin(str, buf);
+			free(str);
+			str = tmp;
 		}
-		if (ft_strchr(str[fd], '\n') != -1)
+		find_pos_n = ft_strchr(str, '\n'); 
+		if (find_pos_n != -1)
 			break ;
 	}
 	free(buf);
-	if (!line || fd < 0 || ret < 0 || BUFFER_SIZE <= 0)
-		return (-1);
+	if (fd < 0 || ret < 0 || BUFFER_SIZE <= 0) //rare
+		return (NULL);
+	if (ret == 0 && !str) //rare
+		return NULL;	
+
+	//EXCEPTION
+	if (ret == 0 && str && *str == '\0') //no adding buf, then if str begin with '\0': last line but with only '\0' 
+		return NULL;	
 	
-	int pos = ft_strchr(str[fd], '\n');
-	if ( pos != -1)
-		return (ft_output(str, line, 1, fd, pos));
+	if (find_pos_n != -1)
+		return (ft_output(&str, find_pos_n+1)); //pos+1 is used for substr(, , length)
 	else
-		return (ft_output(str, line, ret, fd, -1));
+		return (ft_output(&str, 0));
 }
+
